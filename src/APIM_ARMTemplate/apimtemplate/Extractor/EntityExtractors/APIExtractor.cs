@@ -823,11 +823,12 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
                     }
                     break;
                 case "application/vnd.ms-azure-apim.xsd+xml":
+                case "application/vnd.ms-azure-apim.wadl.grammars+xml":
                     if (schemaJson["value"] != null && schemaJson.Count() == 1)
                     {
                         return schemaJson["value"].ToString();
                     }
-                    break;
+                    break;                
             }
 
             return JsonConvert.SerializeObject(schemaJson);

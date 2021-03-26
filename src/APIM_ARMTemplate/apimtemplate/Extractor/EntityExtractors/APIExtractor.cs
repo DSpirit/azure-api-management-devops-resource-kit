@@ -236,7 +236,7 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
             {
                 apiResource.properties.serviceUrl = $"[parameters('{ParameterNames.ServiceUrl}').{ExtractorUtils.GenValidParamName(apiName, ParameterPrefix.Api)}]";
             }
-            
+
             if (apiResource.properties.apiVersionSetId != null)
             {
                 apiResource.dependsOn = new string[] { };
@@ -254,7 +254,7 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
 
             templateResources.Add(apiResource);
 
-            templateResources.AddRange(await GetRelatedTemplateResourcesAsync(apiName, exc));
+            templateResources.AddRange(await GetNestedAPIResources(apiName, exc));
 
             return templateResources;
         }
@@ -324,7 +324,7 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
             {
                 apiResource.properties.serviceUrl = $"[parameters('{ParameterNames.ServiceUrl}').{ExtractorUtils.GenValidParamName(apiName, ParameterPrefix.Api)}]";
             }
-            
+
             if (apiResource.properties.apiVersionSetId != null)
             {
                 apiResource.dependsOn = new string[] { };
@@ -341,7 +341,7 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
             }
 
             templateResources.Add(apiResource);
-            templateResources.AddRange(await GetRelatedTemplateResourcesAsync(apiName, exc));
+            templateResources.AddRange(await GetNestedAPIResources(apiName, exc));
 
             return templateResources;
         }
@@ -495,7 +495,7 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
         /// <param name="apiName">The name of the API.</param>
         /// <param name="exc">The extractor.</param>
         /// <returns></returns>
-        private async Task<IEnumerable<TemplateResource>> GetRelatedTemplateResourcesAsync(string apiName, Extractor exc)
+        private async Task<IEnumerable<TemplateResource>> GetNestedAPIResources(string apiName, Extractor exc)
         {
             List<TemplateResource> templateResources = new List<TemplateResource>();
             string apimname = exc.sourceApimName, resourceGroup = exc.resourceGroup, fileFolder = exc.fileFolder, policyXMLBaseUrl = exc.policyXMLBaseUrl, policyXMLSasToken = exc.policyXMLSasToken;
@@ -634,58 +634,6 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
                     }
                 }
                 templateResources.Add(apiPoliciesResource);
-            }
-            catch (Exception) { }
-            #endregion
-
-            #region API Tags
-            // add tags associated with the api to template
-            try
-            {
-                // pull tags associated with the api
-                string apiTags = await GetAPITagsAsync(apimname, resourceGroup, apiName);
-                JObject oApiTags = JObject.Parse(apiTags);
-
-                foreach (var tag in oApiTags["value"])
-                {
-                    string apiTagName = ((JValue)tag["name"]).Value.ToString();
-                    Console.WriteLine("'{0}' Tag association found", apiTagName);
-
-                    // convert associations between api and tags to template resource class
-                    TagTemplateResource apiTagResource = JsonConvert.DeserializeObject<TagTemplateResource>(tag.ToString());
-                    apiTagResource.name = $"[concat(parameters('{ParameterNames.ApimServiceName}'), '/{apiName}/{apiTagName}')]";
-                    apiTagResource.apiVersion = GlobalConstants.APIVersion;
-                    apiTagResource.scale = null;
-                    apiTagResource.dependsOn = new string[] { $"[resourceId('Microsoft.ApiManagement/service/apis', parameters('{ParameterNames.ApimServiceName}'), '{apiName}')]" };
-                    templateResources.Add(apiTagResource);
-                }
-            }
-            catch (Exception) { }
-            #endregion
-
-            #region API Products
-            // add product api associations to template
-            try
-            {
-                // pull product api associations
-                string apiProducts = await GetAPIProductsAsync(apimname, resourceGroup, apiName);
-                JObject oApiProducts = JObject.Parse(apiProducts);
-
-                foreach (var item in oApiProducts["value"])
-                {
-                    string apiProductName = ((JValue)item["name"]).Value.ToString();
-                    Console.WriteLine("'{0}' Product association found", apiProductName);
-
-                    // convert returned api product associations to template resource class
-                    ProductAPITemplateResource productAPIResource = JsonConvert.DeserializeObject<ProductAPITemplateResource>(item.ToString());
-                    productAPIResource.type = ResourceTypeConstants.ProductAPI;
-                    productAPIResource.name = $"[concat(parameters('{ParameterNames.ApimServiceName}'), '/{apiProductName}/{apiName}')]";
-                    productAPIResource.apiVersion = GlobalConstants.APIVersion;
-                    productAPIResource.scale = null;
-                    productAPIResource.dependsOn = new string[] { $"[resourceId('Microsoft.ApiManagement/service/apis', parameters('{ParameterNames.ApimServiceName}'), '{apiName}')]" };
-
-                    templateResources.Add(productAPIResource);
-                }
             }
             catch (Exception) { }
             #endregion

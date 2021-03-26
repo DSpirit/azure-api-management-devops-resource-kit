@@ -20,20 +20,20 @@ namespace Microsoft.Azure.Management.ApiManagement.ArmTemplates.Extract
             return await CallApiManagementAsync(azToken, requestUrl);
         }
 
-        public async Task<Template> GenerateTagsTemplateAsync(string apimname, string resourceGroup, string singleApiName, List<TemplateResource> apiTemplateResources, List<TemplateResource> productTemplateResources, string policyXMLBaseUrl, string policyXMLSasToken)
+        public async Task<Template> GenerateTagsTemplateAsync(string apimname, string resourceGroup, string singleApiName, List<TemplateResource> apiTagTemplateResources, List<TemplateResource> productTemplateResources, string policyXMLBaseUrl, string policyXMLSasToken)
         {
             Console.WriteLine("------------------------------------------");
             Console.WriteLine("Extracting tags from service");
             Template armTemplate = GenerateEmptyTemplateWithParameters(policyXMLBaseUrl, policyXMLSasToken);
 
             // isolate tag and api operation associations in the case of a single api extraction
-            var apiOperationTagResources = apiTemplateResources.Where(resource => resource.type == ResourceTypeConstants.APIOperationTag);
+            var apiOperationTagResources = apiTagTemplateResources.Where(resource => resource.type == ResourceTypeConstants.APIOperationTag);
 
             // isolate tag and api associations in the case of a single api extraction
-            var apiTagResources = apiTemplateResources.Where(resource => resource.type == ResourceTypeConstants.APITag);
+            var apiTagResources = apiTagTemplateResources.Where(resource => resource.type == ResourceTypeConstants.APITag);
 
             // isolate product api associations in the case of a single api extraction
-            var productAPIResources = apiTemplateResources.Where(resource => resource.type == ResourceTypeConstants.ProductAPI);
+            var productAPIResources = apiTagTemplateResources.Where(resource => resource.type == ResourceTypeConstants.ProductAPI);
 
             // isolate tag and product associations in the case of a single api extraction
             var productTagResources = productTemplateResources.Where(resource => resource.type == ResourceTypeConstants.ProductTag);
